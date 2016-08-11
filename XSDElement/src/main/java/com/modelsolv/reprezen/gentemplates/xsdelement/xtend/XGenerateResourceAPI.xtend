@@ -33,6 +33,7 @@ import com.modelsolv.reprezen.restapi.PropertyRealization
 
 class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 	extension FeatureHelper = new FeatureHelper
+	extension PropertyRealizationHelper = new PropertyRealizationHelper
 	extension ResourceHelper = new ResourceHelper
 	extension ReferenceLinkHelper = new ReferenceLinkHelper
 	extension XMLSchemaHelper = new XMLSchemaHelper
@@ -143,13 +144,13 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 		'''
 			<xs:complexType name="«message.messageTypeName»">
 			«complexType.generateXSDDoc»
-			«IF message.hasSequenceProperties»
+			«IF message.hasSequencePropRzs»
 				<xs:sequence>
-				«FOR feature : message.getReferenceProperties SEPARATOR ""»
-					«(feature as PropertyRealization).generateMessageTypeReferenceProperty(message, resourceAPI, new LinkedList())»
+				«FOR feature : message.getReferencePropRzs SEPARATOR ""»
+					«feature.generateMessageTypeReferenceProperty(message, resourceAPI, new LinkedList())»
 				«ENDFOR»
-				«FOR feature : message.getPrimitiveMultiProperties SEPARATOR ""»
-					«(feature as PropertyRealization).generatePrimitiveProperty(resourceAPI)»
+				«FOR feature : message.getPrimitiveMultiPropRzs SEPARATOR ""»
+					«feature.generatePrimitiveProperty(resourceAPI)»
 				«ENDFOR»
 				«FOR referenceLink : message.getReferenceLinks»
 					«referenceLink.generateReferenceSegment(resourceAPI)»
@@ -205,12 +206,12 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 				«ENDFOR»
 				</xs:sequence>
 			«ELSE»
-				«IF dataResource.hasSequenceProperties»
+				«IF dataResource.hasSequencePropRzs»
 					<xs:sequence>
-					«FOR feature : dataResource.getReferenceProperties SEPARATOR ""»
+					«FOR feature : dataResource.getReferencePropRzs SEPARATOR ""»
 						«feature.generateReferenceProperty(dataResource, resourceAPI, #[])»
 					«ENDFOR»
-					«FOR feature : dataResource.getPrimitiveMultiProperties SEPARATOR ""»
+					«FOR feature : dataResource.getPrimitiveMultiPropRzs SEPARATOR ""»
 						«feature.generatePrimitiveProperty(resourceAPI)»
 					«ENDFOR»
 					«FOR referenceLink : dataResource.getReferenceLinks SEPARATOR ""»
@@ -252,7 +253,7 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 										«ENDIF»
 									</xs:sequence>
 									«IF linkDescriptor != null»
-										«FOR feature : linkDescriptor.includedFeatures.getPrimitiveSimpleProperties»
+										«FOR feature : linkDescriptor.includedFeatures.getPrimitiveSingleProperties»
 											«feature.generatePrimitiveProperty(resourceAPI)»
 										«ENDFOR»
 									«ENDIF»
@@ -274,7 +275,7 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 							«ENDIF»
 						</xs:sequence>
 						«IF linkDescriptor != null»
-							«FOR feature : linkDescriptor.includedFeatures.getPrimitiveSimpleProperties»
+							«FOR feature : linkDescriptor.includedFeatures.getPrimitiveSingleProperties»
 								«feature.generatePrimitiveProperty(resourceAPI)»
 							«ENDFOR»
 						«ENDIF»
