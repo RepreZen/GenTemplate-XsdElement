@@ -20,20 +20,6 @@ class PropertyRealizationHelper {
 	
 	extension FeatureHelper = new FeatureHelper
 
-	def private dispatch Iterable<PropertyRealization> getSequencePropRzs(ServiceDataResource dataResource) {
-		dataResource.includedProperties.getSequencePropRzs
-	}
-
-	def private dispatch Iterable<PropertyRealization> getSequencePropRzs(TypedMessage message) {
-		message.includedProperties.getSequencePropRzs
-	}
-
-	def private dispatch Iterable<PropertyRealization> getSequencePropRzs(Iterable<PropertyRealization> features) {
-		Iterables.concat(
-			features.referencePropRzs,
-			features.primitiveMultiPropRzs)
-	}
-
 	def dispatch Iterable<PropertyRealization> getReferencePropRzs(Iterable<PropertyRealization> features) {
 		features.filter[it.baseProperty instanceof ReferenceProperty]
 	}
@@ -50,27 +36,33 @@ class PropertyRealizationHelper {
 		features.filter[it.baseProperty instanceof PrimitiveProperty]
 	}
 	
-	def dispatch Iterable<PropertyRealization> getPrimitiveMultiPropRzs(Iterable<PropertyRealization> features) {
+	def Iterable<PropertyRealization> getPrimitiveMultiPropRzs(Iterable<PropertyRealization> features) {
 		features.primitivePropRzs.filter[it.isMultiValued]
 	}
 
-	def dispatch Iterable<PropertyRealization> getPrimitiveMultiPropRzs(ServiceDataResource dataResource) {
+	def Iterable<PropertyRealization> getPrimitiveMultiPropRzs(ServiceDataResource dataResource) {
 		dataResource.includedProperties.primitiveMultiPropRzs
 	}
 
-	def dispatch Iterable<PropertyRealization> getPrimitiveMultiPropRzs(TypedMessage message) {
+	def Iterable<PropertyRealization> getPrimitiveMultiPropRzs(TypedMessage message) {
 		message.includedProperties.primitiveMultiPropRzs
 	}
 
-	def dispatch boolean hasSequencePropRzs(Iterable<PropertyRealization> features) {
-		!features.sequencePropRzs.nullOrEmpty
-	}
-
-	def dispatch boolean hasSequencePropRzs(ServiceDataResource dataResource) {
+	def boolean hasSequencePropRzs(ServiceDataResource dataResource) {
 		dataResource.includedProperties.hasSequencePropRzs
 	}
 
-	def dispatch boolean hasSequencePropRzs(TypedMessage message) {
+	def boolean hasSequencePropRzs(TypedMessage message) {
 		message.includedProperties.hasSequencePropRzs
+	}
+
+	def boolean hasSequencePropRzs(Iterable<PropertyRealization> features) {
+		!features.sequencePropRzs.nullOrEmpty
+	}
+
+	def private Iterable<PropertyRealization> getSequencePropRzs(Iterable<PropertyRealization> features) {
+		Iterables.concat(
+			features.referencePropRzs,
+			features.primitiveMultiPropRzs)
 	}
 }
