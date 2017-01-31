@@ -55,7 +55,7 @@ class ResourceHelper {
     }
 
 	def private Iterable<ObjectResource> getAllResources(Structure complexType, ResourceAPI resourceAPI) {
-		resourceAPI.ownedResourceDefinitions.map[it as ObjectResource].filter[it.type == complexType]
+		resourceAPI.ownedResourceDefinitions.map[it as ObjectResource].filter[it.dataType == complexType]
 	}
 
 	def ResourceAPI getInterface(ServiceDataResource dataResource) {

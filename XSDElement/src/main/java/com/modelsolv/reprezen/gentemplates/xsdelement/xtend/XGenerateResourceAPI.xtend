@@ -15,12 +15,15 @@ import com.modelsolv.reprezen.gentemplates.common.services.CommonServices
 import com.modelsolv.reprezen.restapi.CollectionResource
 import com.modelsolv.reprezen.restapi.LinkDescriptor
 import com.modelsolv.reprezen.restapi.Method
+import com.modelsolv.reprezen.restapi.PropertyRealization
 import com.modelsolv.reprezen.restapi.ReferenceEmbed
 import com.modelsolv.reprezen.restapi.ReferenceLink
 import com.modelsolv.reprezen.restapi.ReferenceTreatment
 import com.modelsolv.reprezen.restapi.ResourceAPI
 import com.modelsolv.reprezen.restapi.ServiceDataResource
 import com.modelsolv.reprezen.restapi.TypedMessage
+import com.modelsolv.reprezen.restapi.TypedRequest
+import com.modelsolv.reprezen.restapi.TypedResponse
 import com.modelsolv.reprezen.restapi.ZenModel
 import com.modelsolv.reprezen.restapi.datatypes.PrimitiveProperty
 import com.modelsolv.reprezen.restapi.datatypes.ReferenceElement
@@ -29,7 +32,6 @@ import com.modelsolv.reprezen.restapi.datatypes.Structure
 import java.util.Collection
 import java.util.LinkedList
 import org.eclipse.emf.ecore.EObject
-import com.modelsolv.reprezen.restapi.PropertyRealization
 
 class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 	extension FeatureHelper = new FeatureHelper
@@ -103,8 +105,12 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 		property.baseProperty as T
 	}
 
-	def private getMessageTypeName(TypedMessage message) {
-		CommonServices.getMessageTypeName(message)
+	def private dispatch getMessageTypeName(TypedRequest request) {
+		CommonServices.getRequestTypeName(request)
+	}
+
+	def private dispatch getMessageTypeName(TypedResponse response) {
+		CommonServices.getResponseTypeName(response)
 	}
 
 	def private generateServiceDataResource(ServiceDataResource dataResource, ResourceAPI resourceAPI) {
@@ -116,7 +122,7 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 		.withPrimarySourceItem(locator.locate(resourceAPI)) //
 		.withPrimarySourceItem(locator.locate(dataResource))
 		'''
-			«dataResource.type.generateComplexType(dataResource, resourceAPI)»
+			«dataResource.dataType.generateComplexType(dataResource, resourceAPI)»
 			«dataResource.generateElement»
 			«dataResource.generateTransitionalContainersForReferenceLinks(resourceAPI)»
 			«generateContainersForReferenceEmbeds(dataResource.name, dataResource, dataResource.referenceTreatments.toSet,

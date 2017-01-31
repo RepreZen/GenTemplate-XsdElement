@@ -12,28 +12,28 @@ import com.google.common.base.Splitter
 import com.google.common.base.Strings
 import com.google.common.collect.Lists
 import com.modelsolv.reprezen.gentemplates.common.services.CommonServices
+import com.modelsolv.reprezen.gentemplates.common.xtend.ZenModelHelper
+import com.modelsolv.reprezen.restapi.Documentable
 import com.modelsolv.reprezen.restapi.Method
 import com.modelsolv.reprezen.restapi.ResourceAPI
 import com.modelsolv.reprezen.restapi.ResourceDefinition
 import com.modelsolv.reprezen.restapi.ServiceDataResource
 import com.modelsolv.reprezen.restapi.TypedMessage
 import com.modelsolv.reprezen.restapi.ZenModel
+import com.modelsolv.reprezen.restapi.datatypes.Constraint
 import com.modelsolv.reprezen.restapi.datatypes.DataModel
+import com.modelsolv.reprezen.restapi.datatypes.LengthConstraint
 import com.modelsolv.reprezen.restapi.datatypes.PrimitiveType
 import com.modelsolv.reprezen.restapi.datatypes.ReferenceProperty
+import com.modelsolv.reprezen.restapi.datatypes.RegExConstraint
 import com.modelsolv.reprezen.restapi.datatypes.SingleValueType
 import com.modelsolv.reprezen.restapi.datatypes.Structure
 import com.modelsolv.reprezen.restapi.datatypes.UserDefinedType
+import com.modelsolv.reprezen.restapi.datatypes.ValueRangeConstraint
 import java.util.Collection
 import java.util.LinkedList
 import java.util.Set
 import org.eclipse.emf.ecore.EObject
-import com.modelsolv.reprezen.restapi.Documentable
-import com.modelsolv.reprezen.gentemplates.common.xtend.ZenModelHelper
-import com.modelsolv.reprezen.restapi.datatypes.Constraint
-import com.modelsolv.reprezen.restapi.datatypes.LengthConstraint
-import com.modelsolv.reprezen.restapi.datatypes.RegExConstraint
-import com.modelsolv.reprezen.restapi.datatypes.ValueRangeConstraint
 
 class XMLSchemaHelper {
 	extension ZenModelHelper zenModelHelper = new ZenModelHelper

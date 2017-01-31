@@ -40,7 +40,7 @@ public class XMLSchemaGenTemplate extends ZenModelGenTemplate {
     }
 
     @Override
-    public Generator getGenerator() {
+    public GenTemplate<ZenModel>.Generator getGenerator() {
         return new Generator();
     }
 
