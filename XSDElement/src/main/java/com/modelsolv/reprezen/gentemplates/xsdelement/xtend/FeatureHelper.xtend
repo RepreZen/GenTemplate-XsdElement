@@ -37,7 +37,8 @@ class FeatureHelper {
 	}
 
 	def getReferenceItemName(ReferenceElement referenceElement) {
-		referenceElement.dataType.name.toFirstLower
+		//referenceElement.dataType.name.toFirstLower
+		referenceElement.name.toFirstLower
 	}
 
 	def getReferenceElementName(ReferenceElement referenceElement) {
@@ -79,15 +80,15 @@ class FeatureHelper {
 	}
 
 	def dispatch getListItemMinOccurs(Feature feature) {
-		if(feature.minOccurs > 1) feature.minOccurs else 1
+		if(feature.minOccurs >= 1) feature.minOccurs else 0
 	}
 
 	def dispatch getListItemMinOccurs(ReferenceElement feature) {
-		if(feature.minOccurs > 1) feature.minOccurs else 1
+		if(feature.minOccurs >= 1) feature.minOccurs else 0
 	}
 
 	def dispatch getListItemMinOccurs(PropertyRealization feature) {
-		if(feature.minOccurs > 1) feature.minOccurs else 1
+		if(feature.minOccurs >= 1) feature.minOccurs else 0
 	}
 
 	def dispatch getListItemMaxOccurs(Feature feature) {
