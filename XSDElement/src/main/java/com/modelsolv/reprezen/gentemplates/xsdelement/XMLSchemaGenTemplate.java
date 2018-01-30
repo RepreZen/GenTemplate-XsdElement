@@ -12,6 +12,7 @@ import com.modelsolv.reprezen.core.xml.XmlFormatter;
 import com.modelsolv.reprezen.generators.api.GenerationException;
 import com.modelsolv.reprezen.generators.api.template.GenTemplate;
 import com.modelsolv.reprezen.generators.api.zenmodel.ZenModelGenTemplate;
+import com.modelsolv.reprezen.gentemplates.xsdelement.XMLSchemaGenTemplate.Generator;
 import com.modelsolv.reprezen.gentemplates.xsdelement.xtend.XGenerateDataModel;
 import com.modelsolv.reprezen.gentemplates.xsdelement.xtend.XGenerateResourceAPI;
 import com.modelsolv.reprezen.restapi.ZenModel;
@@ -27,7 +28,7 @@ public class XMLSchemaGenTemplate extends ZenModelGenTemplate {
 
     @Override
     public String getName() {
-        return "XML Schema (Element)"; //$NON-NLS-1$
+        return "Pioneer Research Model"; //$NON-NLS-1$
     }
 
     @Override
