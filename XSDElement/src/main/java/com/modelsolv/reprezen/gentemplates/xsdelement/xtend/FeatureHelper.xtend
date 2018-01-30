@@ -9,9 +9,15 @@
 package com.modelsolv.reprezen.gentemplates.xsdelement.xtend
 
 import com.google.common.collect.Iterables
+import com.modelsolv.reprezen.gentemplates.common.services.CommonServices
+import com.modelsolv.reprezen.restapi.PrimitiveTypeSourceReference
 import com.modelsolv.reprezen.restapi.PropertyRealization
+import com.modelsolv.reprezen.restapi.PropertyReference
 import com.modelsolv.reprezen.restapi.ReferenceLink
 import com.modelsolv.reprezen.restapi.ResourceAPI
+import com.modelsolv.reprezen.restapi.ServiceDataResource
+import com.modelsolv.reprezen.restapi.SourceReference
+import com.modelsolv.reprezen.restapi.TypedMessage
 import com.modelsolv.reprezen.restapi.datatypes.DataModel
 import com.modelsolv.reprezen.restapi.datatypes.Feature
 import com.modelsolv.reprezen.restapi.datatypes.PrimitiveProperty
@@ -23,21 +29,22 @@ import com.modelsolv.reprezen.restapi.datatypes.Structure
 class FeatureHelper {
 	extension XMLSchemaHelper = new XMLSchemaHelper
 	val static UNBOUNDED = 'unbounded'
+	val commonServices = new CommonServices
 
-	def dispatch boolean isRequired(Feature feature) {
+	def dispatch isRequired(Feature feature) {
 		feature.minOccurs > 0
 	}
 
-	def dispatch boolean isRequired(ReferenceElement feature) {
+	def dispatch isRequired(ReferenceElement feature) {
 		feature.minOccurs > 0
 	}
 
-	def dispatch boolean isRequired(PropertyRealization includedProperty) {
+	def dispatch isRequired(PropertyRealization includedProperty) {
 		includedProperty.minOccurs > 0
 	}
 
 	def getReferenceItemName(ReferenceElement referenceElement) {
-		//referenceElement.dataType.name.toFirstLower
+		// referenceElement.dataType.name.toFirstLower
 		referenceElement.name.toFirstLower
 	}
 
@@ -63,7 +70,7 @@ class FeatureHelper {
 	}
 
 	def ReferenceLink getReferenceLink(Feature feature, Iterable<ReferenceLink> referenceLinks) {
-		var refs = referenceLinks.filter[it.referencePath.referenceSegment.referenceElement == feature]
+		var refs = referenceLinks.filter[referenceElement == feature]
 		if(refs.nullOrEmpty) null else refs.findFirst[]
 	}
 
@@ -103,37 +110,71 @@ class FeatureHelper {
 		if(feature.maxOccurs != -1) feature.maxOccurs.normalizedMaxOccurs else UNBOUNDED
 	}
 
+	def dispatch Iterable<Feature> getSequenceProperties(Structure dataType) {
+		dataType.ownedFeatures.sequenceProperties.map[it as Feature]
+	}
+
+	def dispatch Iterable<PropertyRealization> getSequenceProperties(ServiceDataResource dataResource) {
+		Iterables.concat(dataResource.dataType.ownedFeatures.referenceProperties.map[it as PropertyRealization],
+			dataResource.primitiveMultiProperties.map[it as PropertyRealization])
+	}
+
+	def dispatch Iterable<PropertyRealization> getSequenceProperties(TypedMessage message) {
+		Iterables.concat(message.actualType.ownedFeatures.referenceProperties.map[it as PropertyRealization],
+			message.primitiveMultiProperties.map[it as PropertyRealization])
+	}
+
+	def dispatch Iterable<Feature> getSequenceProperties(Iterable<Feature> features) {
+		Iterables.concat(features.referenceProperties.map[it as Feature],
+			features.primitiveMultiProperties.map[it as Feature])
+	}
+
 	def Iterable<PrimitiveProperty> getPrimitiveProperties(Iterable<Feature> features) {
 		features.filter[it.isPrimitiveProperty].map[it as PrimitiveProperty]
 	}
 
-	def Iterable<ReferenceProperty> getReferenceProperties(Iterable<Feature> features) {
+	def dispatch Iterable<ReferenceProperty> getReferenceProperties(Iterable<Feature> features) {
 		features.filter[it instanceof ReferenceProperty].map[it as ReferenceProperty]
+	}
+
+	def dispatch Iterable<PropertyRealization> getReferenceProperties(ServiceDataResource dataResource) {
+		dataResource.includedProperties.filter[isReferenceProperty(it.baseProperty)]
+	}
+
+	def dispatch Iterable<PropertyRealization> getReferenceProperties(TypedMessage message) {
+		message.includedProperties.filter[isReferenceProperty(it.baseProperty)]
 	}
 
 	def isPrimitiveProperty(Feature feature) {
 		feature instanceof PrimitiveProperty
 	}
 
-	def Iterable<PrimitiveProperty> getPrimitiveMultiProperties(Iterable<Feature> features) {
+	def dispatch Iterable<PrimitiveProperty> getPrimitiveMultiProperties(Iterable<Feature> features) {
 		features.filter[it.isMultiValued].primitiveProperties
 	}
 
-	def Iterable<PrimitiveProperty> getPrimitiveSingleProperties(Iterable<Feature> features) {
+	def dispatch Iterable<PropertyRealization> getPrimitiveMultiProperties(ServiceDataResource dataResource) {
+		dataResource.includedProperties.filter[isPrimitiveProperty(it.baseProperty) && it.isMultiValued]
+	}
+
+	def dispatch Iterable<PropertyRealization> getPrimitiveMultiProperties(TypedMessage message) {
+		message.includedProperties.filter[isPrimitiveProperty(it.baseProperty) && it.isMultiValued]
+	}
+
+	def Iterable<PrimitiveProperty> getPrimitiveSimpleProperties(Iterable<Feature> features) {
 		features.primitiveProperties.filter[!it.isMultiValued]
 	}
 
-	def hasSequenceProperties(Iterable<Feature> features) {
+	def dispatch hasSequenceProperties(Iterable<Feature> features) {
 		!features.sequenceProperties.nullOrEmpty
 	}
 
-	def private dispatch Iterable<Feature> getSequenceProperties(Structure dataType) {
-		dataType.ownedFeatures.sequenceProperties.map[it as Feature]
+	def dispatch hasSequenceProperties(ServiceDataResource dataResource) {
+		!dataResource.sequenceProperties.nullOrEmpty
 	}
 
-	def private dispatch Iterable<Feature> getSequenceProperties(Iterable<Feature> features) {
-		Iterables.concat(features.referenceProperties.map[it as Feature],
-			features.primitiveMultiProperties.map[it as Feature])
+	def dispatch hasSequenceProperties(TypedMessage message) {
+		!message.sequenceProperties.nullOrEmpty
 	}
 
 	def dispatch isMultiValued(Feature feature) {
@@ -148,12 +189,56 @@ class FeatureHelper {
 		(feature.maxOccurs > 1) || (feature.maxOccurs == -1)
 	}
 
+	def isPrimitivePropertyReference(PropertyReference featureReference) {
+		featureReference.conceptualFeature.isPrimitiveProperty
+	}
+
+	def isPrimitiveSourceReference(SourceReference sourceReference) {
+		if (sourceReference instanceof PropertyReference)
+			(sourceReference as PropertyReference).isPrimitivePropertyReference
+		else
+			sourceReference instanceof PrimitiveTypeSourceReference
+	}
+
+	def isReferencePropertyReference(PropertyReference featureReference) {
+		featureReference.conceptualFeature.isReferenceProperty
+	}
+
+	def isReferenceProperty(Feature feature) {
+		feature instanceof ReferenceProperty
+	}
+
+	def isReferenceSourceReference(SourceReference sourceReference) {
+		if (sourceReference instanceof PropertyReference)
+			(sourceReference as PropertyReference).isReferencePropertyReference
+		else
+			false
+	}
+
 	def public normalizedMaxOccurs(Integer value) {
 		if(value == 0) 1 else value
 	}
 
-	def private primitiveFeatureType(PrimitiveProperty primitiveProperty) {
+	def primitiveFeatureType(PrimitiveProperty primitiveProperty) {
 		primitiveProperty.type.name
 	}
 
+	def referenceFeatureType(ReferenceProperty referenceProperty) {
+		referenceProperty.type.name
+	}
+
+	def featureType(Feature feature) {
+		if (feature.isPrimitiveProperty)
+			(feature as PrimitiveProperty).primitiveFeatureType
+		else
+			(feature as ReferenceProperty).referenceFeatureType
+	}
+
+	def getPrettyPrintedMultiplicity(Feature feature) {
+		commonServices.getPrettyPrintedMultiplicity(feature)
+	}
+
+	def getPrettyPrintedCardinality(PropertyRealization includedProperty) {
+		commonServices.getPrettyPrintedCardinality(includedProperty)
+	}
 }

@@ -13,8 +13,9 @@ import com.modelsolv.reprezen.generators.api.zenmodel.ZenModelExtractOutputItem
 import com.modelsolv.reprezen.generators.api.zenmodel.ZenModelLocator
 import com.modelsolv.reprezen.gentemplates.common.services.CommonServices
 import com.modelsolv.reprezen.restapi.CollectionResource
-import com.modelsolv.reprezen.restapi.LinkDescriptor
 import com.modelsolv.reprezen.restapi.Method
+import com.modelsolv.reprezen.restapi.ObjectRealization
+import com.modelsolv.reprezen.restapi.PropertyRealization
 import com.modelsolv.reprezen.restapi.ReferenceEmbed
 import com.modelsolv.reprezen.restapi.ReferenceLink
 import com.modelsolv.reprezen.restapi.ReferenceTreatment
@@ -29,9 +30,6 @@ import com.modelsolv.reprezen.restapi.datatypes.Structure
 import java.util.Collection
 import java.util.LinkedList
 import org.eclipse.emf.ecore.EObject
-import com.modelsolv.reprezen.restapi.PropertyRealization
-import com.modelsolv.reprezen.restapi.TypedRequest
-import com.modelsolv.reprezen.restapi.TypedResponse
 
 class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 	extension FeatureHelper = new FeatureHelper
@@ -95,9 +93,9 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 		var Collection<ReferenceProperty> references = new LinkedList<ReferenceProperty>
 
 		references = referenceEmbed.getContainmentReferences.putAll(ReferenceProperty)
-		if (referenceEmbed.eContainer instanceof ReferenceEmbed)
-			containers = getPathTo(referenceEmbed.eContainer as ReferenceEmbed).putAll(ReferenceProperty)
-		references.add(referenceEmbed.referencePath.referenceSegment.referenceElement as ReferenceProperty)
+		if (referenceEmbed.eContainer.eContainer instanceof ReferenceEmbed)
+			containers = getPathTo(referenceEmbed.eContainer.eContainer as ReferenceEmbed).putAll(ReferenceProperty)
+		references.add(referenceEmbed.referenceElement as ReferenceProperty)
 		Iterables.concat(containers, references)
 	}
 
@@ -105,13 +103,8 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 		property.baseProperty as T
 	}
 
-
-	def private dispatch getMessageTypeName(TypedRequest request) {
-		CommonServices.getRequestTypeName(request)
-	}
-
-	def private dispatch getMessageTypeName(TypedResponse response) {
-		CommonServices.getResponseTypeName(response)
+	def private getMessageTypeName(TypedMessage message) {
+		CommonServices.getMessageTypeName(message)
 	}
 
 	def private generateServiceDataResource(ServiceDataResource dataResource, ResourceAPI resourceAPI) {
@@ -164,10 +157,9 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 					«referenceLink.generateReferenceSegment(resourceAPI)»
 				«ENDFOR»
 				«FOR referenceEmbed : message.referenceTreatments.filter(ReferenceEmbed)»
-					«generateNestedReference(referenceEmbed.referencePath.referenceSegment.referenceElement,
-				complexTypeName(message.messageTypeName, referenceEmbed.referencePath.referenceSegment.referenceElement))»
+					«generateNestedReference(referenceEmbed.referenceElement,
+				complexTypeName(message.messageTypeName, referenceEmbed.referenceElement))»
 				«ENDFOR»
-				
 				«FOR feature : message.getIncludedProperties.filter[it.baseProperty.isPrimitiveProperty].filter[
 					!it.isMultiValued] SEPARATOR ""»
 					«feature.generatePrimitiveProperty(resourceAPI)»
@@ -212,8 +204,8 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 					«referenceLink.generateReferenceSegment(resourceAPI)»
 				«ENDFOR»
 				«FOR referenceEmbed : dataResource.referenceTreatments.filter(ReferenceEmbed) SEPARATOR ""»
-					«referenceEmbed.referencePath.referenceSegment.referenceElement.generateNestedReference(
-				complexTypeName(dataResource.name, referenceEmbed.referencePath.referenceSegment.referenceElement))»
+					«referenceEmbed.referenceElement.generateNestedReference(
+				complexTypeName(dataResource.name, referenceEmbed.referenceElement))»
 				«ENDFOR»
 				«FOR feature : dataResource.getIncludedProperties.filter[it.baseProperty.isPrimitiveProperty].filter[
 				!it.isMultiValued] SEPARATOR ""»
@@ -234,7 +226,7 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 					«ENDFOR»
 					«FOR referenceEmbed : dataResource.referenceTreatments.filter(ReferenceEmbed) SEPARATOR ""»
 						«referenceEmbed.referenceElement.generateNestedReference(
-				complexTypeName(dataResource.name, referenceEmbed.referencePath.referenceSegment.referenceElement))»
+				complexTypeName(dataResource.name, referenceEmbed.referenceElement))»
 					«ENDFOR»
 					«FOR feature : dataResource.getIncludedProperties.filter[it.baseProperty.isPrimitiveProperty].filter[
 					!it.isMultiValued] SEPARATOR ""»
@@ -250,7 +242,7 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 
 	def private generateReferenceSegment(ReferenceLink referenceLink, ResourceAPI resourceAPI) {
 		val ReferenceElement referenceProperty = referenceLink.getReferenceProperty
-		val LinkDescriptor linkDescriptor = referenceLink.getLinkDescriptor
+		val ObjectRealization linkDescriptor = referenceLink.getLinkDescriptor
 
 		'''
 		<!-- reference segment -->
@@ -265,13 +257,13 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 									<xs:sequence>
 «««										«referenceLink.generateAtomLink»
 										«IF linkDescriptor != null»
-											«FOR feature : linkDescriptor.includedFeatures.getPrimitiveMultiProperties»
+											«FOR feature : linkDescriptor.allIncludedProperties.map[baseProperty].getPrimitiveMultiProperties»
 												«feature.generatePrimitiveProperty(resourceAPI)»
 											«ENDFOR»
 										«ENDIF»
 									</xs:sequence>
 									«IF linkDescriptor != null»
-										«FOR feature : linkDescriptor.includedFeatures.getPrimitiveSingleProperties»
+										«FOR feature : linkDescriptor.allIncludedProperties.map[baseProperty].getPrimitiveSimpleProperties»
 											«feature.generatePrimitiveProperty(resourceAPI)»
 										«ENDFOR»
 									«ENDIF»
@@ -287,12 +279,12 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 						<xs:sequence>
 							«referenceLink.generateAtomLink»
 							«IF linkDescriptor != null»
-								«FOR feature : linkDescriptor.includedFeatures.getPrimitiveMultiProperties»
+								«FOR feature : linkDescriptor.allIncludedProperties.map[baseProperty].getPrimitiveMultiProperties»
 									«feature.generatePrimitiveProperty(resourceAPI)»
 								«ENDFOR»
 							«ENDIF»
 							«IF linkDescriptor != null»
-								«FOR feature : linkDescriptor.includedFeatures.getPrimitiveSingleProperties»
+								«FOR feature : linkDescriptor.allIncludedProperties.map[baseProperty].getPrimitiveSimpleProperties»
 									«feature.generatePrimitiveProperty(resourceAPI)»
 								«ENDFOR»
 							«ENDIF»
@@ -480,7 +472,7 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 			<xs:element name="«primitiveProperty.name.toFirstLower»List" minOccurs="«primitiveProperty.listMinOccurs»" maxOccurs="1">
 				<xs:complexType>
 					<xs:sequence>
-						<xs:element name="«primitiveProperty.name.toFirstLower»" type="«getTypeName(primitiveProperty, resourceAPI)»" minOccurs="«primitiveProperty.
+						<xs:element name="«primitiveProperty.propertyItemName»" type="«getTypeName(primitiveProperty, resourceAPI)»" minOccurs="«primitiveProperty.
 				listItemMinOccurs»" maxOccurs="«primitiveProperty.getListItemMaxOccurs»" />
 					</xs:sequence>
 				</xs:complexType>
@@ -495,14 +487,15 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 					«IF primitiveProperty.constraints.nullOrEmpty»
 						type="«primitiveProperty.getBase(PrimitiveProperty).getTypeName(resourceAPI)»"
 					«ENDIF»
-					minOccurs="«primitiveProperty.listItemMinOccurs»" maxOccurs="«primitiveProperty.getListItemMaxOccurs»"
+					minOccurs="«primitiveProperty.listItemMinOccurs»" maxOccurs="«primitiveProperty.getListItemMaxOccurs»">
 					«IF !primitiveProperty.constraints.nullOrEmpty»
 						<xs:simpleType>
 							«primitiveProperty.getBase(PrimitiveProperty).getTypeName(resourceAPI).generateRestriction(
 					primitiveProperty.constraints)»
 						</xs:simpleType>
-						</xs:element>
+						
 					«ENDIF»
+				</xs:element>
 			'''
 		} else {
 			'''
@@ -510,7 +503,7 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 					listMinOccurs»" maxOccurs="1">
 					<xs:complexType>
 						<xs:sequence>
-							<xs:element name="«primitiveProperty.baseProperty.name.toFirstLower»" 
+							<xs:element name="«primitiveProperty.getBase(PrimitiveProperty).propertyItemName»" 
 								type="«primitiveProperty.getBase(PrimitiveProperty).getTypeName(resourceAPI)»" minOccurs="«primitiveProperty.
 					listItemMinOccurs»" maxOccurs="«primitiveProperty.listItemMaxOccurs»" />
 						</xs:sequence>
@@ -633,7 +626,7 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 			<xs:complexType name="«complexTypeName(name, pathToCurrentSegment)»">
 			«IF referenceEmbed.linkDescriptor != null»
 				<xs:all>
-				«FOR feature : getPrimitiveProperties(referenceEmbed.linkDescriptor.includedFeatures).filter[it.isMultiValued]»
+				«FOR feature : getPrimitiveProperties(referenceEmbed.linkDescriptor.allIncludedProperties.map[baseProperty]).filter[it.isMultiValued]»
 					«feature.generatePrimitiveProperty(obj.getEContainer(ResourceAPI))»
 				«ENDFOR»
 				«FOR referenceLink : referenceEmbed.nestedReferenceTreatments.filter(ReferenceLink)»
@@ -641,10 +634,10 @@ class XGenerateResourceAPI extends ZenModelExtractOutputItem<ResourceAPI> {
 				«ENDFOR»
 				«FOR refEmbed : referenceEmbed.nestedReferenceTreatments.filter[it instanceof ReferenceEmbed]»
 					«var Iterable<ReferenceProperty> path = Iterables::concat(pathToCurrentSegment.putAll(ReferenceProperty),
-				#[refEmbed.referencePath.referenceSegment.referenceElement as ReferenceProperty])»
-					«generateNestedReference(refEmbed.referencePath.referenceSegment.referenceElement, complexTypeName(name, path))»
+				#[refEmbed.referenceElement as ReferenceProperty])»
+					«generateNestedReference(refEmbed.referenceElement, complexTypeName(name, path))»
 				«ENDFOR»
-				«FOR feature : getPrimitiveProperties(referenceEmbed.linkDescriptor.includedFeatures).filter[!isMultiValued(it)]»
+				«FOR feature : getPrimitiveProperties(referenceEmbed.linkDescriptor.allIncludedProperties.map[baseProperty]).filter[!isMultiValued(it)]»
 					«feature.generatePrimitiveProperty(obj.getEContainer(ResourceAPI))»
 				«ENDFOR»
 				</xs:all>
